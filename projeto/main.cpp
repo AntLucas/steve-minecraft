@@ -1,6 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 #include "stb_image.h"
 #include <cmath>
 
@@ -636,6 +636,14 @@ void teclado(unsigned char tecla, int x, int y) {
             }
             glutPostRedisplay();
             return;
+        case 'z': 
+            if (rotacaoCabeca > -45.0)  // Limite de rotação para a esquerda
+                rotacaoCabeca -= 5.0;
+            break;
+        case 'x': 
+            if (rotacaoCabeca < 45.0)  // Limite de rotação para a direita
+                rotacaoCabeca += 5.0;
+            break;
 
 
         case 27: // Encerra o programa

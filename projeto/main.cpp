@@ -13,6 +13,8 @@ float rotacaoPerna = 0.0;
 float rotacaoCabeca = 0.0;
 float direcao = 1.0;
 
+float angulo = 0.0;
+
 float posicaoX = 0.0f; // Posição no eixo X
 float posicaoZ = 0.0f; // Posição no eixo Z
 float velocidade = 0.1f; // Velocidade do movimento
@@ -36,12 +38,13 @@ float rotacaoBracoSegurando = 90.0f; // Ângulo do braço ao segurar o bloco
 float rotacaoBracoInicial = 0.0f; // Ângulo inicial do braço
 
 
-void desenhaBloco(float x, float y, float z) {
+void desenhaBloco(float x, float y, float z, bool flagRotacao) {
     if (!blocoExiste) return;  // Não desenha se o bloco foi "removido"
 
     glPushMatrix();
     glTranslatef(x, y, z);
 
+    if (flagRotacao) glRotatef(angulo, 1.0, 1.0, 0.0);
     // Face frontal
     glBindTexture(GL_TEXTURE_2D, idsTextura[13]);  // Textura do bloco (índice 13)
     glBegin(GL_QUADS);
@@ -163,7 +166,24 @@ void inicializa() {
     glClearColor(0.1, 0.1, 0.1, 1.0);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
+    
+    // Habilita a iluminação
+    glEnable(GL_LIGHTING);
 
+    // Define a luz ambiente
+    GLfloat luz_ambiente[] = {0.2f, 0.2f, 0.2f, 1.0f};  // cor da luz ambiente
+    glLightfv(GL_LIGHT0, GL_AMBIENT, luz_ambiente);
+
+    // Define a luz difusa (direcional)
+    GLfloat luz_difusa[] = {1.0f, 1.0f, 1.0f, 1.0f};  // cor da luz difusa
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, luz_difusa);
+
+    // Define a posição da luz
+    GLfloat posicao_luz[] = {2.0f, 2.0f, 2.0f, 1.0f};  // Luz posicional
+    glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
+
+    // Ativa a luz 0
+    glEnable(GL_LIGHT0);
     carregarTextura("texturas/cabeca.jpg", 0);
     carregarTextura("texturas/braco.png", 1);
     carregarTextura("texturas/corpo.png", 2);
@@ -178,7 +198,6 @@ void inicializa() {
     carregarTextura("texturas/quadril.png", 11);
     carregarTextura("texturas/pernalado.png", 12);
     carregarTextura("texturas/stone.jpeg", 13);
-
 
 }
 
@@ -434,8 +453,6 @@ void desenhaBraco(float lado) {
     glPopMatrix();
 }
 
-
-
 void desenhaBoneco() {
     glPushMatrix();
 
@@ -459,7 +476,6 @@ void desenhaBoneco() {
     glPopMatrix();
 }
 
-
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
@@ -479,15 +495,14 @@ void display() {
         blocoY = 0.0f; // Bloco no chão
     }
 
-    desenhaBloco(blocoX, blocoY, blocoZ); // Desenha o bloco com a altura dinâmica
-
+    desenhaBloco(blocoX, blocoY, blocoZ, false); // Desenha o bloco com a altura dinâmica
 
     glPushMatrix();
     glTranslatef(posicaoX, 0.0, posicaoZ); // Movimenta o boneco com base na posição
     glRotatef(rotacaoBase, 0.0, 1.0, 0.0);
 
-    // Atualiza a rotação do braço
-   // Atualiza a rotação do braço apenas se estiver levantado
+     // Atualiza a rotação do braço
+    // Atualiza a rotação do braço apenas se estiver levantado
     if (bracoLevantado) {
         rotacaoBraco = rotacaoBracoSegurando; // Braço levantado
     }
@@ -497,9 +512,6 @@ void display() {
 
     glutSwapBuffers();
 }
-
-
-
 
 void reshape(int largura, int altura) {
     glViewport(0, 0, largura, altura);
@@ -533,6 +545,8 @@ void resetarConfiguracoes() {
     // Reseta o estado do braço
     bracoLevantado = false;
     rotacaoBraco = rotacaoBracoInicial;
+
+    carregarTextura("texturas/stone.jpeg", 13);
 
     // Atualiza a tela
     glutPostRedisplay();
@@ -645,7 +659,6 @@ void teclado(unsigned char tecla, int x, int y) {
                 rotacaoCabeca += 5.0;
             break;
 
-
         case 27: // Encerra o programa
             exit(0);
     }
@@ -660,7 +673,52 @@ void teclado(unsigned char tecla, int x, int y) {
 }
 
 
+void menu(int opcao)
+{
+ switch (opcao)
+ {
+  case 1: // Diamante
+    carregarTextura("texturas/diamante.jpg", 13);
+    break;
+  case 2: // Madeira  
+    carregarTextura("texturas/madeira.png", 13);
+    break;
+  case 3: // Areia
+    carregarTextura("texturas/areia.jpeg", 13);
+    break;
+  case 4: // livro
+    carregarTextura("texturas/tijolo.jpeg", 13);
+    break;
+  case 5: // amarelo  
+    //todo
+    break;  
+  case 6: // magenta  
+    //todo
+    break;  
+  case 7: // lento
+    //todo
+    break;
+  case 8: // add
+    desenhaBloco(blocoX, blocoY, blocoZ, true); 
+    break;
+    case 9: // resetar
+    resetarConfiguracoes();
+    break;
+ } 
 
+ glutPostRedisplay();
+}
+
+void atualiza(int valor)
+{
+ angulo += 1.0;
+
+ if (angulo > 360)
+   angulo = 0;
+
+ glutPostRedisplay();
+ glutTimerFunc(16, atualiza, 0);   
+}
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
@@ -673,9 +731,32 @@ int main(int argc, char** argv) {
     glutReshapeFunc(reshape);
     glutKeyboardFunc(teclado);
 
+    int submenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Diamante", 1);
+    glutAddMenuEntry("Madeira", 2);
+    glutAddMenuEntry("Areia", 3);
+    glutAddMenuEntry("tijolo", 4);
+
+    // int submenuIluminacao = glutCreateMenu(menu);
+    // glutAddMenuEntry("Baixa", 5);
+    // glutAddMenuEntry("Normal", 6);
+    // glutAddMenuEntry("Alta", 7);
+
+    glutCreateMenu(menu);
+    glutAddSubMenu("Blocos", submenu);
+    // glutAddMenuEntry("Iluminação", submenuIluminacao);
+    glutAddMenuEntry("Rotaciona bloco", 8);
+    glutAddMenuEntry("Reset", 9);
+   
+
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
 
+
+    glutTimerFunc(1000, atualiza, 0);   
+  
     glutMainLoop();
     return 0;
 }

@@ -25,6 +25,8 @@ float cameraDistance = 20.0;
 int mouseX, mouseY;
 bool mousePressed = false;
 
+int sombraTipo = 1;
+
 float blocoX = 5.0f;  // Posição X do bloco
 float blocoZ = 5.0f;  // Posição Z do bloco
 float blocoY = 0.0f; // Altura inicial do bloco (no chão)
@@ -37,14 +39,25 @@ bool bracoLevantado = false; // Indica se o braço está levantado
 float rotacaoBracoSegurando = 90.0f; // Ângulo do braço ao segurar o bloco
 float rotacaoBracoInicial = 0.0f; // Ângulo inicial do braço
 
+//GLfloat luzAmbiente[] = {1.5, 0.5, 1.5, 1.0}; // Luz rosa
+ GLfloat luzAmbiente[] = {3, 3, 3, 1.0};   // luz suave
+ GLfloat luzDifusa[] = {1.0, 1.0, 1.0, 1.0}; // luz branca
+ GLfloat luzPosicao[] = {0.9, 0.9, 0.5, 1.0}; // luz pontual
 
-void desenhaBloco(float x, float y, float z, bool flagRotacao) {
+void configuraIluminacao()
+{
+
+ glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
+ glLightfv(GL_LIGHT0, GL_DIFFUSE, luzDifusa);
+ glLightfv(GL_LIGHT0, GL_POSITION, luzPosicao);
+}
+
+void desenhaBloco(float x, float y, float z) {
     if (!blocoExiste) return;  // Não desenha se o bloco foi "removido"
 
     glPushMatrix();
     glTranslatef(x, y, z);
 
-    if (flagRotacao) glRotatef(angulo, 1.0, 1.0, 0.0);
     // Face frontal
     glBindTexture(GL_TEXTURE_2D, idsTextura[13]);  // Textura do bloco (índice 13)
     glBegin(GL_QUADS);
@@ -170,20 +183,9 @@ void inicializa() {
     // Habilita a iluminação
     glEnable(GL_LIGHTING);
 
-    // Define a luz ambiente
-    GLfloat luz_ambiente[] = {0.2f, 0.2f, 0.2f, 1.0f};  // cor da luz ambiente
-    glLightfv(GL_LIGHT0, GL_AMBIENT, luz_ambiente);
-
-    // Define a luz difusa (direcional)
-    GLfloat luz_difusa[] = {1.0f, 1.0f, 1.0f, 1.0f};  // cor da luz difusa
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, luz_difusa);
-
-    // Define a posição da luz
-    GLfloat posicao_luz[] = {2.0f, 2.0f, 2.0f, 1.0f};  // Luz posicional
-    glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
-
     // Ativa a luz 0
     glEnable(GL_LIGHT0);
+
     carregarTextura("texturas/cabeca.jpg", 0);
     carregarTextura("texturas/braco.png", 1);
     carregarTextura("texturas/corpo.png", 2);
@@ -484,6 +486,14 @@ void display() {
     float cameraZ = cameraDistance * cos(cameraAngle);
     gluLookAt(cameraX, 10.0, cameraZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
+    configuraIluminacao();
+
+    if (sombraTipo == 0)
+        glShadeModel(GL_FLAT);  // sombreamento plano (flat)
+
+    if (sombraTipo == 1)
+        glShadeModel(GL_SMOOTH);  // sombreamento suave (Gouraud)
+
     // Atualiza a posição do bloco se ele estiver seguindo
     // Atualiza a posição do bloco
     if (blocoSeguindo) {
@@ -495,7 +505,7 @@ void display() {
         blocoY = 0.0f; // Bloco no chão
     }
 
-    desenhaBloco(blocoX, blocoY, blocoZ, false); // Desenha o bloco com a altura dinâmica
+    desenhaBloco(blocoX, blocoY, blocoZ); // Desenha o bloco com a altura dinâmica
 
     glPushMatrix();
     glTranslatef(posicaoX, 0.0, posicaoZ); // Movimenta o boneco com base na posição
@@ -547,6 +557,10 @@ void resetarConfiguracoes() {
     rotacaoBraco = rotacaoBracoInicial;
 
     carregarTextura("texturas/stone.jpeg", 13);
+
+    luzAmbiente[0] = 3;
+    luzAmbiente[1] = 3;
+    luzAmbiente[2] = 3;
 
     // Atualiza a tela
     glutPostRedisplay();
@@ -659,6 +673,18 @@ void teclado(unsigned char tecla, int x, int y) {
                 rotacaoCabeca += 5.0;
             break;
 
+        case '+': // +  
+            luzAmbiente[0] += 0.1; // Incrementa componente vermelha
+            luzAmbiente[1] += 0.1; // Incrementa componente verde
+            luzAmbiente[2] += 0.1; // Incrementa componente azul
+            glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
+            break;  
+        case '-': // -
+            luzAmbiente[0] -= 0.1;
+            luzAmbiente[1] -= 0.1;
+            luzAmbiente[2] -= 0.1;
+            glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
+            break;
         case 27: // Encerra o programa
             exit(0);
     }
@@ -689,19 +715,25 @@ void menu(int opcao)
   case 4: // livro
     carregarTextura("texturas/tijolo.jpeg", 13);
     break;
-  case 5: // amarelo  
-    //todo
+  case 5: // +  
+    luzAmbiente[0] = 3; // Incrementa componente vermelha
+    luzAmbiente[1] = 3; // Incrementa componente verde
+    luzAmbiente[2] = 3; // Incrementa componente azul
+    glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
     break;  
-  case 6: // magenta  
-    //todo
+  case 6: // -
+    luzAmbiente[0] -= luzAmbiente[0];
+    luzAmbiente[1] -= luzAmbiente[1];
+    luzAmbiente[2] -= luzAmbiente[2];
+    glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
+    break;
+  case 7: // +  
+    luzAmbiente[0] = 1.5; // Incrementa componente vermelha
+    luzAmbiente[1] = 0.5; // Incrementa componente verde
+    luzAmbiente[2] = 1.5; // Incrementa componente azul
+    glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);
     break;  
-  case 7: // lento
-    //todo
-    break;
-  case 8: // add
-    desenhaBloco(blocoX, blocoY, blocoZ, true); 
-    break;
-    case 9: // resetar
+  case 8: // resetar
     resetarConfiguracoes();
     break;
  } 
@@ -737,16 +769,15 @@ int main(int argc, char** argv) {
     glutAddMenuEntry("Areia", 3);
     glutAddMenuEntry("tijolo", 4);
 
-    // int submenuIluminacao = glutCreateMenu(menu);
-    // glutAddMenuEntry("Baixa", 5);
-    // glutAddMenuEntry("Normal", 6);
-    // glutAddMenuEntry("Alta", 7);
+    int submenuIluminacao = glutCreateMenu(menu);
+    glutAddMenuEntry("Ligar luz", 5);
+    glutAddMenuEntry("Apagar luz", 6);
 
     glutCreateMenu(menu);
     glutAddSubMenu("Blocos", submenu);
-    // glutAddMenuEntry("Iluminação", submenuIluminacao);
-    glutAddMenuEntry("Rotaciona bloco", 8);
-    glutAddMenuEntry("Reset", 9);
+    glutAddSubMenu("Iluminação", submenuIluminacao);
+    glutAddMenuEntry("Luz rosa", 7);
+    glutAddMenuEntry("Reset", 8);
    
 
     glutAttachMenu(GLUT_RIGHT_BUTTON);

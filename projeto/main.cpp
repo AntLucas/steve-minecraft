@@ -1,6 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 
-#include <GLUT/glut.h>
+#include <GL/glut.h>
 #include "stb_image.h"
 #include <cmath>
 
@@ -176,7 +176,7 @@ void carregarTextura(const char* nomeArquivo, int indice) {
 }
 
 void inicializa() {
-    glClearColor(0.1, 0.1, 0.1, 1.0);
+    glClearColor(0.0, 0.0, 1.0, 1.0);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
     
@@ -200,8 +200,32 @@ void inicializa() {
     carregarTextura("texturas/quadril.png", 11);
     carregarTextura("texturas/pernalado.png", 12);
     carregarTextura("texturas/stone.jpeg", 13);
+    carregarTextura("texturas/chao.jpg", 14);
+
 
 }
+
+void desenhaChao() {
+    glPushMatrix();
+    
+    // Posiciona o chão mais abaixo
+    float alturaChao = -5.0f; // Valor negativo para posicionar o chão mais abaixo
+    
+    glBindTexture(GL_TEXTURE_2D, idsTextura[14]); // Vincula a textura do chão
+    glBegin(GL_QUADS);
+
+    // Define os vértices do chão em uma posição fixa no mundo
+    glTexCoord2f(0.0, 0.0); glVertex3f(-50.0, alturaChao, -50.0); // Canto inferior esquerdo
+    glTexCoord2f(10.0, 0.0); glVertex3f(50.0, alturaChao, -50.0);  // Canto inferior direito
+    glTexCoord2f(10.0, 10.0); glVertex3f(50.0, alturaChao, 50.0);  // Canto superior direito
+    glTexCoord2f(0.0, 10.0); glVertex3f(-50.0, alturaChao, 50.0);  // Canto superior esquerdo
+
+    glEnd();
+    
+    glPopMatrix();
+}
+
+
 
 void desenhaCabeca(float largura, float altura, float profundidade) {
     glPushMatrix();
@@ -506,6 +530,7 @@ void display() {
     }
 
     desenhaBloco(blocoX, blocoY, blocoZ); // Desenha o bloco com a altura dinâmica
+    desenhaChao();
 
     glPushMatrix();
     glTranslatef(posicaoX, 0.0, posicaoZ); // Movimenta o boneco com base na posição
@@ -516,6 +541,9 @@ void display() {
     if (bracoLevantado) {
         rotacaoBraco = rotacaoBracoSegurando; // Braço levantado
     }
+    
+
+
 
     desenhaBoneco();
     glPopMatrix();
